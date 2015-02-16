@@ -38,7 +38,7 @@ def package_windows(target, version):
     shutil.copy('%s/bin/libintl-8.dll' % target.windows_prefix, out)
     shutil.copy('%s/bin/libiconv-2.dll' % target.windows_prefix, out)
     shutil.copy('%s/bin/libxslt-1.dll' % target.windows_prefix, out)
-    target.command('cd build && zip -9 -r dumpxyz-%s.zip %s' % (version, out))
+    target.command('cd build && zip -9 -r dumpxyz-%s.zip dumpxyz-%s' % (version, version))
     return os.path.abspath('build/dumpxyz-%s.zip' % version)
 
 def dependencies(target):
