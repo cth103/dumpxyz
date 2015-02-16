@@ -12,7 +12,7 @@ def build(target, options):
 
 def package_windows(target, version):
     out = 'build/dumpxyz-%s' % version
-    target.command('mkdir %s', out)
+    target.command('mkdir %s' % out)
     shutil.copy('build/src/dumpxyz.exe', out)
     shutil.copy('%s/bin/dcp-1.0.dll' % target.directory, out)
     shutil.copy('%s/bin/asdcp-libdcp-1.0.dll' % target.directory, out)
