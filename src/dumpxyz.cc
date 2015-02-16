@@ -23,10 +23,13 @@
 #include <getopt.h>
 #include <string>
 #include <iostream>
+#include <fstream>
 
 using std::string;
 using std::cerr;
 using std::cout;
+using std::ostream;
+using std::ofstream;
 using boost::shared_ptr;
 using boost::optional;
 
@@ -41,10 +44,10 @@ help (string n)
 }
 
 static void
-dump (dcp::MonoPictureMXF& mxf, int64_t frame)
+dump (dcp::MonoPictureMXF& mxf, ostream& s, int64_t frame)
 {
-	cout << "Frame " << frame << "\n";
-	cout << "Size " << mxf.size().width << " " << mxf.size().height << "\n";
+	s << "Frame " << frame << "\n";
+	s << "Size " << mxf.size().width << " " << mxf.size().height << "\n";
 
 	shared_ptr<const dcp::XYZImage> xyz = mxf.get_frame(frame)->xyz_image ();
 	int* xyz_x = xyz->data (0);
@@ -52,9 +55,9 @@ dump (dcp::MonoPictureMXF& mxf, int64_t frame)
 	int* xyz_z = xyz->data (2);
 
 	for (int y = 0; y < mxf.size().height; ++y) {
-		cout << "Row " << y << "\n";
+		s << "Row " << y << "\n";
 		for (int x = 0; x < mxf.size().width; ++x) {
-			cout << *xyz_x << " " << *xyz_y << " " << *xyz_z << "\n";
+			s << *xyz_x << " " << *xyz_y << " " << *xyz_z << "\n";
 			++xyz_x;
 			++xyz_y;
 			++xyz_z;
@@ -66,16 +69,18 @@ int
 main (int argc, char* argv[])
 {
 	optional<int> frame;
+	optional<boost::filesystem::path> output;
 	
 	int option_index = 0;
 	while (true) {
 		static struct option long_options[] = {
 			{ "help", no_argument, 0, 'h'},
 			{ "frame", required_argument, 0, 'f'},
+			{ "output", required_argument, 0, 'o'},
 			{ 0, 0, 0, 0 }
 		};
 
-		int c = getopt_long (argc, argv, "hf", long_options, &option_index);
+		int c = getopt_long (argc, argv, "hf:o:", long_options, &option_index);
 
 		if (c == -1) {
 			break;
@@ -88,6 +93,9 @@ main (int argc, char* argv[])
 		case 'f':
 			frame = atoi (optarg);
 			break;
+		case 'o':
+			output = optarg;
+			break;
 		}
 	}
 
@@ -98,11 +106,24 @@ main (int argc, char* argv[])
 
 	dcp::MonoPictureMXF mxf (argv[optind]);
 
+	ostream* s = 0;
+	bool delete_stream = false;
+	if (output) {
+		s = new ofstream (output.get().string().c_str());
+		delete_stream = true;
+	} else {
+		s = &cout;
+	}
+
 	if (frame) {
-		dump (mxf, frame.get ());
+		dump (mxf, *s, frame.get ());
 	} else {
 		for (int64_t i = 0; i < mxf.intrinsic_duration(); i++) {
-			dump (mxf, i);
+			dump (mxf, *s, i);
 		}
+	}
+
+	if (delete_stream) {
+		delete s;
 	}
 }
