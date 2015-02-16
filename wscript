@@ -1,5 +1,5 @@
 APPNAME = 'dumpxyz'
-VERSION = '0.0.5'
+VERSION = '0.0.5devel'
 
 def options(opt):
     opt.load('compiler_cxx')
