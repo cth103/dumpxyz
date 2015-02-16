@@ -39,12 +39,13 @@ help (string n)
 	cerr << "Syntax: " << n << " [OPTIONS] <MXF>\n"
 	     << "  -h, --help         show this help\n"
 	     << "  -f, --frame        frame index to dump\n"
+	     << "  -r, --row          row index to dump\n"
 	     << "\n"
 	     << "<MXF> is a video MXF file.\n";
 }
 
 static void
-dump (dcp::MonoPictureMXF& mxf, ostream& s, int64_t frame)
+dump (dcp::MonoPictureMXF& mxf, ostream& s, int64_t frame, optional<int> row)
 {
 	s << "Frame " << frame << "\n";
 	s << "Size " << mxf.size().width << " " << mxf.size().height << "\n";
@@ -54,9 +55,25 @@ dump (dcp::MonoPictureMXF& mxf, ostream& s, int64_t frame)
 	int* xyz_y = xyz->data (1);
 	int* xyz_z = xyz->data (2);
 
-	for (int y = 0; y < mxf.size().height; ++y) {
-		s << "Row " << y << "\n";
-		for (int x = 0; x < mxf.size().width; ++x) {
+	int const width = mxf.size().width;
+	int const height = mxf.size().height;
+
+	if (!row) {
+		for (int y = 0; y < height; ++y) {
+			s << "Row " << y << "\n";
+			for (int x = 0; x < width; ++x) {
+				s << *xyz_x << " " << *xyz_y << " " << *xyz_z << "\n";
+				++xyz_x;
+				++xyz_y;
+				++xyz_z;
+			}
+		}
+	} else {
+		xyz_x += row.get() * width;
+		xyz_y += row.get() * width;
+		xyz_z += row.get() * width;
+		s << "Row " << row.get() << "\n";
+		for (int x = 0; x < width; ++x) {
 			s << *xyz_x << " " << *xyz_y << " " << *xyz_z << "\n";
 			++xyz_x;
 			++xyz_y;
@@ -69,6 +86,7 @@ int
 main (int argc, char* argv[])
 {
 	optional<int> frame;
+	optional<int> row;
 	optional<boost::filesystem::path> output;
 	
 	int option_index = 0;
@@ -76,11 +94,12 @@ main (int argc, char* argv[])
 		static struct option long_options[] = {
 			{ "help", no_argument, 0, 'h'},
 			{ "frame", required_argument, 0, 'f'},
+			{ "row", required_argument, 0, 'r'},
 			{ "output", required_argument, 0, 'o'},
 			{ 0, 0, 0, 0 }
 		};
 
-		int c = getopt_long (argc, argv, "hf:o:", long_options, &option_index);
+		int c = getopt_long (argc, argv, "hf:r:o:", long_options, &option_index);
 
 		if (c == -1) {
 			break;
@@ -92,6 +111,9 @@ main (int argc, char* argv[])
 			exit (EXIT_SUCCESS);
 		case 'f':
 			frame = atoi (optarg);
+			break;
+		case 'r':
+			row = atoi (optarg);
 			break;
 		case 'o':
 			output = optarg;
@@ -116,10 +138,10 @@ main (int argc, char* argv[])
 	}
 
 	if (frame) {
-		dump (mxf, *s, frame.get ());
+		dump (mxf, *s, frame.get (), row);
 	} else {
 		for (int64_t i = 0; i < mxf.intrinsic_duration(); i++) {
-			dump (mxf, *s, i);
+			dump (mxf, *s, i, row);
 		}
 	}
 
