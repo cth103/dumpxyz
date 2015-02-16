@@ -1,0 +1,11 @@
+#!/bin/bash
+
+DEST=web.carlh.net:carlh.net/software/dumpxyz
+
+latest=`cdist -p dumpxyz -q latest`
+cdist -p dumpxyz -t windows-32 -c v$latest package
+scp dumpxyz-$latest.zip $DEST/windows-32/dumpxyz-win32-$latest.zip
+cdist -p dumpxyz -t windows-64 -c v$latest package
+scp dumpxyz-$latest.zip $DEST/windows-64/dumpxyz-win64-$latest.zip
+cdist -p dumpxyz -t source -c v$latest package
+scp dumpxyz-$latest.tar.bz2 $DEST/
