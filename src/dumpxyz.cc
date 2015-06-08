@@ -17,7 +17,7 @@
 
 */
 
-#include <dcp/mono_picture_mxf.h>
+#include <dcp/mono_picture_asset.h>
 #include <dcp/mono_picture_frame.h>
 #include <dcp/xyz_image.h>
 #include <getopt.h>
@@ -45,7 +45,7 @@ help (string n)
 }
 
 static void
-dump (dcp::MonoPictureMXF& mxf, ostream& s, int64_t frame, optional<int> row)
+dump (dcp::MonoPictureAsset& mxf, ostream& s, int64_t frame, optional<int> row)
 {
 	s << "Frame " << frame << "\n";
 	s << "Size " << mxf.size().width << " " << mxf.size().height << "\n";
@@ -126,7 +126,7 @@ main (int argc, char* argv[])
 		exit (EXIT_FAILURE);
 	}
 
-	dcp::MonoPictureMXF mxf (argv[optind]);
+	dcp::MonoPictureAsset mxf (argv[optind]);
 
 	ostream* s = 0;
 	bool delete_stream = false;
