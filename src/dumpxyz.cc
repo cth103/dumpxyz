@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2015 Carl Hetherington <cth@carlh.net>
+    Copyright (C) 2015-2016 Carl Hetherington <cth@carlh.net>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,8 +18,9 @@
 */
 
 #include <dcp/mono_picture_asset.h>
+#include <dcp/mono_picture_asset_reader.h>
 #include <dcp/mono_picture_frame.h>
-#include <dcp/xyz_image.h>
+#include <dcp/openjpeg_image.h>
 #include <getopt.h>
 #include <string>
 #include <iostream>
@@ -50,7 +51,9 @@ dump (dcp::MonoPictureAsset& mxf, ostream& s, int64_t frame, optional<int> row)
 	s << "Frame " << frame << "\n";
 	s << "Size " << mxf.size().width << " " << mxf.size().height << "\n";
 
-	shared_ptr<const dcp::XYZImage> xyz = mxf.get_frame(frame)->xyz_image ();
+	shared_ptr<dcp::MonoPictureAssetReader> reader = mxf.start_read ();
+
+	shared_ptr<const dcp::OpenJPEGImage> xyz = reader->get_frame(frame)->xyz_image ();
 	int* xyz_x = xyz->data (0);
 	int* xyz_y = xyz->data (1);
 	int* xyz_z = xyz->data (2);
@@ -88,7 +91,7 @@ main (int argc, char* argv[])
 	optional<int> frame;
 	optional<int> row;
 	optional<boost::filesystem::path> output;
-	
+
 	int option_index = 0;
 	while (true) {
 		static struct option long_options[] = {
