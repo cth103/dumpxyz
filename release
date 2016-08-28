@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEST=web.carlh.net:carlh.net/software/dumpxyz
+DEST=carl@web.carlh.net:carlh.net/downloads/dumpxyz
 
 latest=`cdist -p dumpxyz -q latest`
 cdist -p dumpxyz -t windows-32 -c v$latest package
