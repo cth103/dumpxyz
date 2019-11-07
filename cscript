@@ -25,7 +25,7 @@ def package_windows(target, version):
     target.command('cp %s/bin/zlib1.dll %s' % (target.windows_prefix, out))
     target.command('cp %s/bin/libboost_filesystem-mt.dll %s' % (target.windows_prefix, out))
     target.command('cp %s/bin/libboost_system-mt.dll %s' % (target.windows_prefix, out))
-    target.command('cp %s/bin/libgcc_s_sjlj-1.dll %s' % (target.windows_prefix, out))
+    target.command('cp %s/bin/libgcc_s_seh-1.dll %s' % (target.windows_prefix, out))
     target.command('cp %s/bin/libstdc++-6.dll %s' % (target.windows_prefix, out))
     target.command('cp %s/bin/libglibmm-2.4-1.dll %s' % (target.windows_prefix, out))
     target.command('cp %s/bin/libxml++-2.6-2.dll %s' % (target.windows_prefix, out))
