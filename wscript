@@ -1,4 +1,5 @@
 import subprocess
+import shlex
 
 APPNAME = 'dumpxyz'
 
