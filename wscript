@@ -1,3 +1,5 @@
+import subprocess
+
 APPNAME = 'dumpxyz'
 
 this_version = subprocess.Popen(shlex.split('git tag -l --points-at HEAD'), stdout=subprocess.PIPE).communicate()[0]
