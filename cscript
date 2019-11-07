@@ -1,4 +1,6 @@
 import glob
+import subprocess
+import shlex
 import shutil
 import os
 
@@ -41,11 +43,43 @@ def package_windows(target, version):
     target.command('cd build && zip -9 -r dumpxyz-%s.zip dumpxyz-%s' % (version, version))
     return os.path.abspath('build/dumpxyz-%s.zip' % version)
 
+def package_osx(target, version):
+    out = 'build/dumpxyz-%s' % version
+    target.command('mkdir %s' % out)
+    shutil.copy('build/src/dumpxyz', out)
+    executable = os.path.join(out, 'dumpxyz')
+    prefixes = [ target.environment_prefix, target.directory, '/private%s' % target.directory ]
+    print(prefixes)
+    replacements = []
+
+    skip = True
+    libs = subprocess.Popen(shlex.split('otool -L %s' % executable), stdout=subprocess.PIPE).communicate()[0]
+    for l in libs.splitlines():
+        if skip:
+            skip = False
+            continue
+        path = l.split()[0]
+        for p in prefixes:
+	    if path.startswith(p):
+                replacements.append(path)
+
+    for r in replacements:
+        os.system('install_name_tool -change %s %s %s' % (r, '@executable_path/%s' % os.path.basename(r), executable))
+        shutil.copyfile(r, os.path.join(out, os.path.basename(r)))
+
+    for f in ['system', 'filesystem', 'date_time']:
+        shutil.copyfile(os.path.join(target.environment_prefix, '64', 'lib', 'libboost_%s.dylib' % f), os.path.join(out, 'libboost_%s.dylib' % f))
+    
+    target.command('cd build && zip -9 -r dumpxyz-%s.zip dumpxyz-%s' % (version, version))
+    return os.path.abspath('build/dumpxyz-%s.zip' % version)
+
 def dependencies(target):
     return (('libdcp', '1.0'),)
 
 def package(target, version):
     if target.platform == 'windows':
         return package_windows(target, version)
+    elif target.platform == 'osx':
+	return package_osx(target, version)
 
     return None
