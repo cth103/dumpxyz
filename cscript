@@ -43,17 +43,19 @@ def package_windows(target, version):
     target.command('cd build && zip -9 -r dumpxyz-%s.zip dumpxyz-%s' % (version, version))
     return os.path.abspath('build/dumpxyz-%s.zip' % version)
 
-def package_osx(target, version):
-    out = 'build/dumpxyz-%s' % version
-    target.command('mkdir %s' % out)
-    shutil.copy('build/src/dumpxyz', out)
-    executable = os.path.join(out, 'dumpxyz')
-    prefixes = [ target.environment_prefix, target.directory, '/private%s' % target.directory ]
-    print(prefixes)
-    replacements = []
+def osx_resolve_linkage(target, binary, out):
+    print('osx_resolve_linkage %s %s %s' % (target, binary, out))
+    # Copy the binary to our output area
+    copy = os.path.join(out, os.path.basename(binary))
+    if os.path.exists(copy):
+        return
+    shutil.copy(binary, copy)
 
+    # Find dependencies of `copy' that need to be copied
     skip = True
-    libs = subprocess.Popen(shlex.split('otool -L %s' % executable), stdout=subprocess.PIPE).communicate()[0]
+    replacements = []
+    prefixes = [ target.environment_prefix, target.directory, '/private%s' % target.directory ]
+    libs = subprocess.Popen(shlex.split('otool -L %s' % copy), stdout=subprocess.PIPE).communicate()[0]
     for l in libs.splitlines():
         if skip:
             skip = False
@@ -63,9 +65,15 @@ def package_osx(target, version):
 	    if path.startswith(p):
                 replacements.append(path)
 
+    # Resolve link and copy the dependency, then recurse into that
     for r in replacements:
-        os.system('install_name_tool -change %s %s %s' % (r, '@executable_path/%s' % os.path.basename(r), executable))
-        shutil.copyfile(r, os.path.join(out, os.path.basename(r)))
+        os.system('install_name_tool -change %s %s %s' % (r, '@executable_path/%s' % os.path.basename(r), copy))
+        osx_resolve_linkage(target, r, out)
+
+def package_osx(target, version):
+    out = 'build/dumpxyz-%s' % version
+    target.command('mkdir %s' % out)
+    osx_resolve_linkage(target, 'build/src/dumpxyz', out)
 
     for f in ['system', 'filesystem', 'date_time']:
         shutil.copyfile(os.path.join(target.environment_prefix, '64', 'lib', 'libboost_%s.dylib' % f), os.path.join(out, 'libboost_%s.dylib' % f))
